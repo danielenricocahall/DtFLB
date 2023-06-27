@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Inline JavaScript</title>
+    <meta charset="utf-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1">
+    <link rel="stylesheet"
+          href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+</head>
+
+<body>
+<div class="container">
+    <div style="text-align: center;">
+    <img src="https://scontent-iad3-1.xx.fbcdn.net/v/t39.30808-6/244126318_148531264155164_2510123622191901143_n.jpg?_nc_cat=110&ccb=1-7&_nc_sid=09cbfe&_nc_ohc=AjsGxn6IID0AX9c7fUf&_nc_ht=scontent-iad3-1.xx&oh=00_AfCgXAP1mbikOs0OVhLTH8wujU3QQ5NLDXMXK1g76c668w&oe=649B5104" width="50%" height="50%"\>
+        <section class="foo">
+            <p class="user_location_message" style="font-size: 2em" ></p>
+        </section>
+    </div>
+</div>
+
+<head>
+
+    <script type="module">
+
+        // computed from latlong.net/convert-address-to-lat-long.html using FLB's address:
+        // 4323 Main St, Philadelphia, PA 19127
+        // TODO use this with google maps api?
+        const FAT_LADY_LATITUDE = 40.025341
+        const FAT_LADY_LONGITUDE = -75.222733
+        const FLBPosition = {'latitude': FAT_LADY_LATITUDE, 'longitude': FAT_LADY_LONGITUDE}
+
+
+        const truncate = (number, digits) => {return Math.trunc(number*Math.pow(10, digits))/Math.pow(10, digits)}
+
+        const haversineDistance = (userPosition, FLBPosition, isMiles) => {
+            function toRad(x) {
+                return x * Math.PI / 180;
+            }
+            console.log(userPosition)
+            const userLongitude = userPosition.longitude
+            const userLatitude = userPosition.latitude
+
+            console.log(FLBPosition)
+            const FLBLongitude = FLBPosition.longitude
+            const FLBLatitude = FLBPosition.latitude
+
+
+            const R = 6371; // km
+
+            const latitudeDifference = FLBLatitude - userLatitude;
+            const latitudeDifferenceInRads = toRad(latitudeDifference);
+            const longitudeDifference= FLBLongitude - userLongitude
+            const longitudeDifferenceInRads = toRad(longitudeDifference)
+            const a = Math.sin(latitudeDifferenceInRads / 2) * Math.sin(latitudeDifferenceInRads / 2) +
+                Math.cos(toRad(userLatitude)) * Math.cos(toRad(FLBLatitude)) *
+                Math.sin(longitudeDifferenceInRads / 2) * Math.sin(longitudeDifferenceInRads / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            let distance = R * c;
+
+            if(isMiles) distance /= 1.60934;
+
+            return distance;
+        }
+        const userMessageDiv = document.getElementsByClassName("user_location_message")[0];
+
+        const successCallback = (position) => {
+            const distanceToFatLady = haversineDistance(position.coords, FLBPosition, true)
+            let fontColor
+            let additionalMessage
+            if(distanceToFatLady <= 1) {
+                fontColor = "#00FF00e
+                additionalMessage = "<br>Nice! Go get a &#127867;"
+            }
+            else {
+                fontColor = "#FF0000"
+                additionalMessage = "<br>You're too far away. What are you doing?"
+            }
+
+            userMessageDiv.innerHTML = "<p style=\"color:" + fontColor + "\">You're about <u>" + truncate(distanceToFatLady, 3) + "</u> miles away from FLB" + additionalMessage + "</p>"
+        };
+
+        const errorCallback = (error) => {
+            userMessageDiv.innerHTML = "Sorry bruh, there was an error :(. You should probably just go to Fat Lady."
+            console.log(error);
+        };
+        const options = {
+            enableHighAccuracy: true,
+            timeout: 5000,
+            maximumAge: 0,
+        };
+        navigator.geolocation.getCurrentPosition(successCallback, errorCallback, options);
+    </script>
+</head>
+</body>
+
+</html>
